@@ -1,246 +1,82 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-	"strconv"
-	"strings"
-	"sort"
-)
+// This package will hold the Blackjack game logic
 
-type card struct {
-	colour  string
-	number  int
-	suite   string
-	royalty string
+var players int
+
+type player struct {
+	playerNo int
+	kind     string //player, or dealer
+	card1    card
+	card2    card
+	hit      bool // If the player chooses hit, we change this value to true
+	stand    bool // If the player chooses stand, we change this value to true
+	turn     bool // Is it their turn
+
 }
 
-type deckType struct { // This currently a struct containing a slice of cards, but it itself is NOT a slice of cards. If we want to use append, it
-	instance []card
-} //deck is a slice of cards
+var deck deckType
 
-var suite = []string{"spades", "diamonds", "clubs", "hearts"}
-var royalty = []string{"Ace", "King", "Queen", "Jack", "Joker"}
-var exSlice []int // Card numbers to remove
+var pSlice []player
 
-var jokers int
-var decks int
+type dealer struct {
+	player
+}
 
 func main() {
 
-	cardsToRemove()
-	howManyDecks()
-	howManyJokers()
-	newDeck()
-
 }
 
-func (d deckType) Shuffle() deckType { //This shuffle method takes a pointer to the deck, shuffles it, and returns it
-	for i := 1; i < 52; i++ { //loop through the cards
-		d.instance[i], d.instance[rand.Intn(len(d.instance)-1)] = d.instance[rand.Intn(len(d.instance)-1)], d.instance[i]
-		// This takes the card at i, and the card at a random index between
-		fmt.Println(&d)
-	}
-	return deckType{}
+func Hit(p player) { // If the player chooses Hit, they are dealt a new card, and have the choice of Hit or Stand again
+	p.hit = true
+	newCard(&deck)
+	p.hit = false
 }
 
-func (d deckType) Len() int {
-	x := d.instance
-	return len(x)
-}
+func Stand(p player) { // If the player chooses stand, their turn ends, and it's the next players turn
+	p.turn = false
 
-func (d deckType) Less(i, j int) bool {
-	i = d.instance[i].number   //i is equal to the card number stored at index i
-	j = d.instance[i+1].number //j is equal to the card number held at index i+1
-	return i < j               //return whether the value at i is less than the value at i+1
-}
+	for i := 0; i < len(pSlice)-1; i++ {
 
-func (d deckType) Swap(i, j int) {
-	i = d.instance[i].number   //i is equal to the card number stored at index i
-	j = d.instance[i+1].number //j is equal to the card number held at index i+1
-	i, j = j, i                //swap them
-
-}
-
-type Interface interface{
-	Len() int
-	Less(i, j int) bool
-	Swap(i, j int)
-}
-
-func (d deckType) Sort(){
-	sort.Slice(d.instance, func(i, j int) bool {
-		return d.instance[i].number < d.instance[j].number
-	})
-
-
-}
-
-func newDeck() deckType { // Have it return deckType so we can pass this as an argument to other things
-	deck1 := deckType{}
-
-	// Include logic for removing any cards
-
-	// Include logic for using multiple decks (for things like Blackjack)
-	for d := 0; d < decks; d++ {     // This outer loop repeats to compose a deck from however many decks the user wants
-
-		for j := 0; j <= 12; j++ { // first 13 will be spades
-			x := card{number: j + 1, suite: "spades", colour: "black"}
-
-			deck1.pictureCards(x)
-
-		}
-		for k := 0; k <= 12; k++ {
-			x := card{number: k + 1, suite: "diamonds", colour: "red"}
-
-			deck1.pictureCards(x)
-		}
-
-		for l := 0; l <= 12; l++ {
-			x := card{number: l + 1, suite: "clubs", colour: "black"}
-
-			deck1.pictureCards(x)
-
-		}
-
-		for m := 0; m <= 12; m++ {
-			x := card{number: m + 1, suite: "hearts", colour: "red"}
-
-			deck1.pictureCards(x)
-
-		}
-
-		deck1.incJokers()         // Include any jokers that we need to include
-		deck1.removeChosenCards() // Remove any cards we need to remove
-		deck1.Sort()
-	}
-
-	fmt.Println(deck1)
-	return deck1
-}
-
-func (d *deckType) removeChosenCards() {
-	for i := 0; i < len(d.instance)-1; i++ { // Looping through the deck...      the first part of the for, _, would be the index
-
-		for j := 0; j < len(exSlice); j++ {
-			// ...and then for each card, looping through the "cards to remove" slice....
-			if d.instance[i].number == exSlice[j] { // ... and comparing it with the current card...
-				d.instance[0], d.instance[i] = d.instance[i], d.instance[0] //swap the current element with the element in position 0
-				d.instance = d.instance[1:len(d.instance)]                  //then just truncate....
-
-				//d.instance[i].suite =  "XXXXXX"}
-
-
-			}
+		if pSlice[i].playerNo == p.playerNo+1 { // It is now the turn of the next player, indicated by their player numbers
+			pSlice[i].turn = true
 		}
 	}
 }
 
+func newCard(d *deckType) {
+	for i := 0; i < len(pSlice)-1; i++ {
+		if pSlice[i].hit == true {
+			pSlice[i].card1 = d.instance[0] // We replace their first card with the next card in the shuffled deck
+		}
+	}
+}
 
-
-
-
-
-
-func cardsToRemove() {
-	fmt.Println("Are there any card numbers you would like to exclude? Enter 'y' for yes, or 'n' for no: ")
-	var text string
-	fmt.Scan(&text)
-	text = strings.ToLower(text)
-	if text == "n" || text == strings.ToLower("no") {
-		//Do nothing
-	} else {
-		if text == "y" || text == strings.ToLower("Yes") {
-			fmt.Println("Please enter the card numbers you would like to exclude, separated by a comma, eg '2,3,7': ")
-			var sequence string // creates a string variable named sequence
-			fmt.Scan(&sequence)
-
-			var splitSeq = strings.Split(sequence, ",")
-			for _, value := range splitSeq {
-				intValue, _ := strconv.Atoi(value)
-				exSlice = append(exSlice, intValue)
-			}
-			fmt.Println("The cards you have chosen to remove are: ", exSlice)
-
+func (dealer) deal(d *deckType) {
+	d.Shuffle()
+	for i := 0; i < len(pSlice); i++ { // Deal everyone their first card
+		pSlice[i].card1 = deck.instance[0]
+		if pSlice[i].kind == "player" { // If it's the dealer, the first card will not be visible
+			pSlice[i].card1.visible = true
 		} else {
-			fmt.Println("Please enter a valid input.")
-			cardsToRemove()
+			pSlice[i].card1.visible = false
 		}
 	}
+
+	for j := 0; j < len(pSlice); j++ { // Deal everyone their second card
+		pSlice[j].card2 = deck.instance[0]
+		pSlice[j].card2.visible = true
+	} // The second card will be visible
 }
 
-func howManyJokers() {
-	fmt.Println("How many jokers would you like? Please enter 0, 1, or 2: ") // Take input to find out how many jokers, then implement logic to include them
-	var count int
-	fmt.Scan(&count)
-	if count > 2 || count < 0 {
-		fmt.Println("Invalid number")
-		howManyJokers()
-	} else {
-
-		var text string
-		fmt.Printf("You would like to include %v jokers, is that correct? Enter 'y' for yes, or 'n' for no: \n", count)
-		fmt.Scan(&text)
-
-		text = strings.ToLower(text)
-		if text == "y" || text == strings.ToLower("Yes") {
-			fmt.Printf("You have chosen to have %d jokers", count)
-			jokers = count
-
+func playersInit() {
+	for i := 0; i <= players; i++ {
+		p := player{playerNo: i}
+		if i == players { // The last player to be initialised will be the dealer
+			p.kind = "dealer"
 		} else {
-			howManyJokers()
+			p.kind = "player"
 		}
+		pSlice = append(pSlice, p)
 	}
-}
-
-
-func howManyDecks() {
-	fmt.Println("How many decks would you like to use? Please enter 1, 2 or 3: ") // Take input to find out how many jokers, then implement logic to include them
-	var count int
-	fmt.Scan(&count)
-	if count > 3 || count < 1 {
-		fmt.Println("Invalid number")
-		howManyDecks()
-	} else {
-
-		var text string
-		fmt.Printf("You would like to use %v decks, is that correct? Enter 'y' for yes, or 'n' for no: \n", count)
-		fmt.Scan(&text)
-
-		text = strings.ToLower(text)
-		if text == "y" || text == strings.ToLower("Yes") {
-			fmt.Printf("You have chosen to use %d decks\n", count)
-			decks = count
-
-		} else {
-			howManyDecks()
-		}
-	}
-}
-
-
-
-
-func (d *deckType) incJokers() { //This method works on a pointer to a deck, and adds the jokers as required
-
-	for i := 53; i <= 52+jokers; i++ {
-		x := card{number: i, royalty: "Joker"}
-		d.instance = append(d.instance, x)
-	}
-
-}
-
-func (d *deckType) pictureCards(c card) { //This method works on a pointer to a deck, and takes a card as input
-	switch c.number {
-	case 1:
-		c.royalty = "Ace"
-	case 11:
-		c.royalty = "Jack"
-	case 12:
-		c.royalty = "Queen"
-	case 13:
-		c.royalty = "King"
-	}
-	d.instance = append(d.instance, c)
-
 }
