@@ -24,10 +24,12 @@ var royalty = []string{"Ace", "King", "Queen", "Jack", "Joker"}
 var exSlice []int // Card numbers to remove
 
 var jokers int
+var decks int
 
 func main() {
 
 	cardsToRemove()
+	howManyDecks()
 	howManyJokers()
 	newDeck()
 
@@ -80,36 +82,38 @@ func newDeck() deckType { // Have it return deckType so we can pass this as an a
 	// Include logic for removing any cards
 
 	// Include logic for using multiple decks (for things like Blackjack)
+	for d := 0; d < decks; d++ {     // This outer loop repeats to compose a deck from however many decks the user wants
 
-	for j := 0; j <= 12; j++ { // first 13 will be spades
-		x := card{number: j + 1, suite: "spades", colour: "black"}
+		for j := 0; j <= 12; j++ { // first 13 will be spades
+			x := card{number: j + 1, suite: "spades", colour: "black"}
 
-		deck1.pictureCards(x)
+			deck1.pictureCards(x)
 
+		}
+		for k := 0; k <= 12; k++ {
+			x := card{number: k + 1, suite: "diamonds", colour: "red"}
+
+			deck1.pictureCards(x)
+		}
+
+		for l := 0; l <= 12; l++ {
+			x := card{number: l + 1, suite: "clubs", colour: "black"}
+
+			deck1.pictureCards(x)
+
+		}
+
+		for m := 0; m <= 12; m++ {
+			x := card{number: m + 1, suite: "hearts", colour: "red"}
+
+			deck1.pictureCards(x)
+
+		}
+
+		deck1.incJokers()         // Include any jokers that we need to include
+		deck1.removeChosenCards() // Remove any cards we need to remove
+		deck1.Sort()
 	}
-	for k := 0; k <= 12; k++ {
-		x := card{number: k + 1, suite: "diamonds", colour: "red"}
-
-		deck1.pictureCards(x)
-	}
-
-	for l := 0; l <= 12; l++ {
-		x := card{number: l + 1, suite: "clubs", colour: "black"}
-
-		deck1.pictureCards(x)
-
-	}
-
-	for m := 0; m <= 12; m++ {
-		x := card{number: m + 1, suite: "hearts", colour: "red"}
-
-		deck1.pictureCards(x)
-
-	}
-
-	deck1.incJokers()         // Include any jokers that we need to include
-	deck1.removeChosenCards() // Remove any cards we need to remove
-	deck1.Sort()
 
 	fmt.Println(deck1)
 	return deck1
@@ -174,11 +178,8 @@ func howManyJokers() {
 		howManyJokers()
 	} else {
 
-		//fmt.Print(&jokers)
-		// This block is to confirm they want to use the value they have provided.
-
 		var text string
-		fmt.Printf("You would like to remove %v jokers, is that correct? Enter 'y' for yes, or 'n' for no: \n", count)
+		fmt.Printf("You would like to include %v jokers, is that correct? Enter 'y' for yes, or 'n' for no: \n", count)
 		fmt.Scan(&text)
 
 		text = strings.ToLower(text)
@@ -191,6 +192,34 @@ func howManyJokers() {
 		}
 	}
 }
+
+
+func howManyDecks() {
+	fmt.Println("How many decks would you like to use? Please enter 1, 2 or 3: ") // Take input to find out how many jokers, then implement logic to include them
+	var count int
+	fmt.Scan(&count)
+	if count > 3 || count < 1 {
+		fmt.Println("Invalid number")
+		howManyDecks()
+	} else {
+
+		var text string
+		fmt.Printf("You would like to use %v decks, is that correct? Enter 'y' for yes, or 'n' for no: \n", count)
+		fmt.Scan(&text)
+
+		text = strings.ToLower(text)
+		if text == "y" || text == strings.ToLower("Yes") {
+			fmt.Printf("You have chosen to use %d decks\n", count)
+			decks = count
+
+		} else {
+			howManyDecks()
+		}
+	}
+}
+
+
+
 
 func (d *deckType) incJokers() { //This method works on a pointer to a deck, and adds the jokers as required
 
