@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // This package will hold the Blackjack game logic
 
 var players int
@@ -12,7 +14,11 @@ type player struct {
 	hit      bool // If the player chooses hit, we change this value to true
 	stand    bool // If the player chooses stand, we change this value to true
 	turn     bool // Is it their turn
-
+	score    int
+	value    int    // value of the cards currently held
+	cards    []card // Because there is no limit to how many cards you can ask for, a slice is the perfect data type
+	hasWon   bool
+	hasBust  bool
 }
 
 var deck deckType
@@ -47,7 +53,19 @@ func Stand(p player) { // If the player chooses stand, their turn ends, and it's
 func newCard(d *deckType) {
 	for i := 0; i < len(pSlice)-1; i++ {
 		if pSlice[i].hit == true {
-			pSlice[i].card1 = d.instance[0] // We replace their first card with the next card in the shuffled deck
+			pSlice[i].cards = append(pSlice[i].cards, d.instance[0]) // We add the next card in the shuffled deck to the player's hand
+		}
+	}
+}
+
+func totCheck(p *player) {
+	if p.value == 21 {
+		p.hasWon = true
+		fmt.Printf("Congratulations player %v, you have won the game!", p.playerNo)
+	} else {
+		if p.value > 21 {
+			fmt.Printf("Player %v has bust!", p.playerNo)
+			p.hasBust = true
 		}
 	}
 }
@@ -55,17 +73,17 @@ func newCard(d *deckType) {
 func (dealer) deal(d *deckType) {
 	d.Shuffle()
 	for i := 0; i < len(pSlice); i++ { // Deal everyone their first card
-		pSlice[i].card1 = deck.instance[0]
+		pSlice[i].cards[0] = deck.instance[0]
 		if pSlice[i].kind == "player" { // If it's the dealer, the first card will not be visible
-			pSlice[i].card1.visible = true
+			pSlice[i].cards[0].visible = true
 		} else {
-			pSlice[i].card1.visible = false
+			pSlice[i].cards[0].visible = false
 		}
 	}
 
 	for j := 0; j < len(pSlice); j++ { // Deal everyone their second card
-		pSlice[j].card2 = deck.instance[0]
-		pSlice[j].card2.visible = true
+		pSlice[j].cards[1] = deck.instance[0]
+		pSlice[j].cards[1].visible = true
 	} // The second card will be visible
 }
 
